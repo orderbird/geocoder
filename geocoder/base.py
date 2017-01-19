@@ -84,35 +84,62 @@ class Base(object):
         raise ValueError('Provide API Key')
 
     def _connect(self, **kwargs):
-        self.status_code = 'Unknown'
-        self.timeout = kwargs.get('timeout', 5.0)
-        self.proxies = kwargs.get('proxies', '')
         try:
-            r = self.rate_limited_get(
+            ret = self.rate_limited_get(
                 self.url,
                 params=self.params,
                 headers=self.headers,
                 timeout=self.timeout,
                 proxies=self.proxies
             )
-            self.status_code = r.status_code
-            self.url = r.url
-            if r.content:
-                self.status_code = 200
         except (KeyboardInterrupt, SystemExit):
             raise
         except requests.exceptions.SSLError:
             self.status_code = 495
             self.error = 'ERROR - SSLError'
+        else:
+            return ret
 
-        # Open JSON content from Request connection
+    def read_request_response(self, ret):
+        # Open JSON content from Request response
+        self.status_code = ret.status_code
+        self.url = ret.url
+        if ret.content:
+            self.status_code = 200
         if self.status_code == 200:
             try:
-                self.content = r.json()
+                self.content = ret.json()
             except:
                 self.status_code = 400
                 self.error = 'ERROR - JSON Corrupted'
-                self.content = r.content
+                self.content = ret.content
+
+    async def read_request_response_async(self, ret):
+        # Open JSON content from Request response
+        self.status_code = ret.status
+        self.url = ret.url
+        if ret.content:
+            self.status_code = 200
+        if self.status_code == 200:
+            try:
+                self.content = await ret.json()
+            except:
+                self.status_code = 400
+                self.error = 'ERROR - JSON Corrupted'
+                self.content = await ret.content.read()
+
+    def load_response(self):
+        try:
+            for result in self.next():  # Convert to iterator in each of the search tools
+                self._build_tree(result)
+                self._exceptions()
+                self._catch_errors()
+                self._json()
+        except:
+            self._build_tree(self.content)
+            self._exceptions()
+            self._catch_errors()
+            self._json()
 
     def _initialize(self, **kwargs):
         # Remove extra URL from kwargs
@@ -123,20 +150,26 @@ class Base(object):
         self.content = None
         self.encoding = kwargs.get('encoding', 'utf-8')
         self.session = kwargs.get('session', requests.Session())
-        self._connect(url=self.url, **kwargs)
-        ###
-        try:
-            for result in self.next():		# Convert to iterator in each of the search tools
-                self._build_tree(result)
-                self._exceptions()
-                self._catch_errors()
-                self._json()
-        except:
-            self._build_tree(self.content)
-            self._exceptions()
-            self._catch_errors()
-            self._json()
-        ###
+        self.status_code = 'Unknown'
+        self.timeout = kwargs.get('timeout', 5.0)
+        self.proxies = kwargs.get('proxies', '')
+        # already load result if session comes from request, if it is synchronous
+        if isinstance(self.session, requests.Session):
+            result = self._connect(url=self.url, **kwargs)
+            if result:
+                self.read_request_response(ret=result)
+            self.load_response()
+
+    async def _init(self):
+        async with self.session.get(
+                self.url,
+                params=self.params,
+                headers=self.headers,
+                timeout=self.timeout) as result:
+            # proxy=self.proxies.first() if isinstance(self.proxies, n(list, tuple)) else self.proxies)
+            if result:
+                await self.read_request_response_async(ret=result)
+            self.load_response()
 
     def _json(self):
         self.fieldnames = []

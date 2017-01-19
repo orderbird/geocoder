@@ -135,7 +135,6 @@ def get(location, **kwargs):
 
     :param ``location``: Your search location you want geocoded.
     :param ``provider``: The geocoding engine you want to use.
-
     :param ``method``: Define the method (geocode, method).
     """
     provider = kwargs.get('provider', 'bing').lower().strip()
@@ -150,6 +149,14 @@ def get(location, **kwargs):
         if method not in options[provider]:
             raise ValueError("Invalid method")
     return options[provider][method](location, **kwargs)
+
+
+async def async_get(location, **kwargs):
+    """Async get
+    """
+    loc = get(location, **kwargs)(location, **kwargs)
+    await loc._init()
+    return loc
 
 
 def distance(*args, **kwargs):

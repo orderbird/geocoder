@@ -33,7 +33,7 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright (c) 2013-2016 Denis Carriere'
 
 # CORE
-from geocoder.api import get, yahoo, bing, geonames, mapquest, google, mapbox  # noqa
+from geocoder.api import async_get, get, yahoo, bing, geonames, mapquest, google, mapbox  # noqa
 from geocoder.api import nokia, osm, tomtom, geolytica, arcgis, opencage  # noqa
 from geocoder.api import maxmind, ipinfo, freegeoip, ottawa, here, baidu, w3w  # noqa
 from geocoder.api import yandex, mapzen, komoot, tamu, geocodefarm, tgos, uscensus  # noqa
