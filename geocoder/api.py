@@ -154,7 +154,7 @@ def get(location, **kwargs):
 async def async_get(location, **kwargs):
     """Async get
     """
-    loc = get(location, **kwargs)(location, **kwargs)
+    loc = get(location, **kwargs)
     await loc._init()
     return loc
 
