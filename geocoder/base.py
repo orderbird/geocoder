@@ -128,7 +128,7 @@ class Base(object):
                 self.error = 'ERROR - JSON Corrupted'
                 self.content = await ret.content.read()
 
-    def load_response(self):
+    def _load_response(self):
         try:
             for result in self.next():  # Convert to iterator in each of the search tools
                 self._build_tree(result)
@@ -158,7 +158,7 @@ class Base(object):
             result = self._connect(url=self.url, **kwargs)
             if result:
                 self.read_request_response(ret=result)
-            self.load_response()
+            self._load_response()
 
     async def _init(self):
         async with self.session.get(
@@ -169,7 +169,7 @@ class Base(object):
             # proxy=self.proxies.first() if isinstance(self.proxies, n(list, tuple)) else self.proxies)
             if result:
                 await self.read_request_response_async(ret=result)
-            self.load_response()
+            self._load_response()
 
     def _json(self):
         self.fieldnames = []
