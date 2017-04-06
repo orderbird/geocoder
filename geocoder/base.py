@@ -152,7 +152,7 @@ class Base(object):
         self.session = kwargs.get('session', requests.Session())
         self.status_code = 'Unknown'
         self.timeout = kwargs.get('timeout', 5.0)
-        self.proxies = kwargs.get('proxies', '')
+        self.proxies = kwargs.get('proxies', None)
         # already load result if session comes from request, if it is synchronous
         if isinstance(self.session, requests.Session):
             result = self._connect(url=self.url, **kwargs)
@@ -161,12 +161,18 @@ class Base(object):
             self._load_response()
 
     async def _init(self):
+        if isinstance(self.proxies, (list, tuple)):
+            proxy = self.proxies[0]
+        elif isinstance(self.proxies, dict):
+            proxy = self.proxies.get('https', self.proxies.get('http', list(self.proxies.values())[0]))
+        else:
+            proxy = self.proxies
         async with self.session.get(
                 self.url,
                 params=self.params,
                 headers=self.headers,
-                timeout=self.timeout) as result:
-            # proxy=self.proxies.first() if isinstance(self.proxies, n(list, tuple)) else self.proxies)
+                timeout=self.timeout,
+                proxy=proxy) as result:
             if result:
                 await self.read_request_response_async(ret=result)
             self._load_response()
