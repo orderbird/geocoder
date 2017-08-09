@@ -161,7 +161,9 @@ class Base(object):
             self._load_response()
 
     async def _init(self):
-        if isinstance(self.proxies, (list, tuple)):
+        if not self.proxies:
+            proxy = None
+        elif isinstance(self.proxies, (list, tuple)):
             proxy = self.proxies[0]
         elif isinstance(self.proxies, dict):
             proxy = self.proxies.get('https', self.proxies.get('http', list(self.proxies.values())[0]))
